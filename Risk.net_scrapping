@@ -1,0 +1,47 @@
+import requests
+import re
+from bs4 import BeautifulSoup
+
+query = "law"
+# find last page of page number
+URL = 'https://www.risk.net/search/articles?&query=' + query
+page = requests.get(URL)
+soup = BeautifulSoup(page.content, 'html.parser')
+results = soup.find(id='')
+risk_elems = results.find_all('span', class_='last')
+span_class_last = str(risk_elems)
+
+
+
+m = re.search('page=(.+?)&amp', span_class_last)
+if m:
+    noOfPage = m.group(1)
+else:
+    noOfPage = 0
+
+
+#loop throught of each page
+for pageNo in range (0, int(noOfPage)):
+    URL = 'https://www.risk.net/search/articles?page='+ str(pageNo) + '&query=' + query
+    page = requests.get(URL)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    results = soup.find(id='listings')
+    risk_elems = results.find_all('h5', class_='article-title')
+
+    #first result of each page:
+    risk_elems_string = str(risk_elems)
+    m = re.search('href=\"(.+?)\"', risk_elems_string)
+    if m:
+        found = m.group(1)
+        if (int(pageNo) >= 1):
+            print("https://www.risk.net" + found)
+        else: #first result of the first page
+            print(found)
+
+    #rest of the results of each page:
+    for t in range (1, len(risk_elems)):
+        risk_elems_string = str(risk_elems[t])
+        m = re.search('href=\"(.+?)\"', risk_elems_string)
+        if m:
+            found = m.group(1)
+        print("https://www.risk.net" + found)
